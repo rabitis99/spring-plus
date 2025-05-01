@@ -18,12 +18,19 @@ public class Manager {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false) // 일정 만든 사람 id
     private User user;
+
     @ManyToOne(fetch = FetchType.LAZY) // 일정 id
     @JoinColumn(name = "todo_id", nullable = false)
     private Todo todo;
 
-    public Manager(User user, Todo todo) {
+
+    // Manager는 반드시 하나의 Todo에 속해야 합니다.
+    //
+    public Manager(User user) {
         this.user = user;
+
+    }
+    public void setTodo(Todo todo) {
         this.todo = todo;
     }
 }
