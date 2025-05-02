@@ -8,9 +8,13 @@ import org.example.expert.domain.todo.entity.Todo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
+@Repository
 @RequiredArgsConstructor
 public class TodoRepositoryCustomImpl implements TodoRepositoryCustom {
 
@@ -34,18 +38,18 @@ public class TodoRepositoryCustomImpl implements TodoRepositoryCustom {
             dataQueryBuilder.append(" AND t.modifiedAt <= :modifiedTo");
         }
 
-        dataQueryBuilder.append(" ORDER BY t.modifiedAt DESC");
-
         TypedQuery<Todo> dataQuery = em.createQuery(dataQueryBuilder.toString(), Todo.class);
 
         if (condition.getWeather() != null && !condition.getWeather().isBlank()) {
             dataQuery.setParameter("weather", condition.getWeather());
         }
         if (condition.getModifiedFrom() != null) {
-            dataQuery.setParameter("modifiedFrom", condition.getModifiedFrom());
+            LocalDateTime localDateTimeFrom=condition.getModifiedFrom().atTime(LocalTime.MIN);
+            dataQuery.setParameter("modifiedFrom", localDateTimeFrom);
         }
         if (condition.getModifiedTo() != null) {
-            dataQuery.setParameter("modifiedTo", condition.getModifiedTo());
+            LocalDateTime localDateTimeTo=condition.getModifiedTo().atTime(LocalTime.MAX);
+            dataQuery.setParameter("modifiedTo", localDateTimeTo);
         }
 
         dataQuery.setFirstResult((int) pageable.getOffset());
@@ -73,11 +77,14 @@ public class TodoRepositoryCustomImpl implements TodoRepositoryCustom {
             countQuery.setParameter("weather", condition.getWeather());
         }
         if (condition.getModifiedFrom() != null) {
-            countQuery.setParameter("modifiedFrom", condition.getModifiedFrom());
+            LocalDateTime localDateTimeFrom=condition.getModifiedFrom().atTime(LocalTime.MIN);
+            countQuery.setParameter("modifiedFrom", localDateTimeFrom);
         }
         if (condition.getModifiedTo() != null) {
-            countQuery.setParameter("modifiedTo", condition.getModifiedTo());
+            LocalDateTime localDateTimeTo=condition.getModifiedTo().atTime(LocalTime.MAX);
+            countQuery.setParameter("modifiedTo", localDateTimeTo);
         }
+
 
         long total = countQuery.getSingleResult();
 
