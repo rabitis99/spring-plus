@@ -4,7 +4,11 @@ import org.example.expert.domain.todo.dto.request.TodoCondition;
 import org.example.expert.domain.todo.entity.Todo;
 import org.springframework.data.domain.Page;
 
-public interface TodoRepositoryCustom {
+import java.util.Optional;
 
-    Page<Todo> findTodoWithWeather(TodoCondition condition);
+public interface TodoRepositoryCustom{
+
+    Page<Todo> findTodosWithWeather(TodoCondition condition);
+
+    Optional<Todo> findTodoWithUserByQquery(Long todoId);
 }

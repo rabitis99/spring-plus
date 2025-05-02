@@ -1,10 +1,13 @@
 package org.example.expert.domain.todo.repository;
 
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import lombok.RequiredArgsConstructor;
 import org.example.expert.domain.todo.dto.request.TodoCondition;
+import org.example.expert.domain.todo.entity.QTodo;
 import org.example.expert.domain.todo.entity.Todo;
+import org.example.expert.domain.user.entity.QUser;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -13,15 +16,18 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
 public class TodoRepositoryCustomImpl implements TodoRepositoryCustom {
 
     private final EntityManager em;
+    private final JPAQueryFactory jpaQueryFactory;
 
     @Override
-    public Page<Todo> findTodoWithWeather(TodoCondition condition) {
+    public Page<Todo> findTodosWithWeather(TodoCondition condition) {
+
         Pageable pageable = condition.getPageable();
 
         // ===== 1. 데이터 쿼리 (Fetch Join 포함) =====
@@ -85,10 +91,24 @@ public class TodoRepositoryCustomImpl implements TodoRepositoryCustom {
             countQuery.setParameter("modifiedTo", localDateTimeTo);
         }
 
-
+        //page 직접구현으로 진행
         long total = countQuery.getSingleResult();
 
         return new PageImpl<>(todos, pageable, total);
+    }
+
+    @Override
+    public Optional<Todo> findTodoWithUserByQquery(Long todoId) {
+        //처음이라서 static 사용 X
+        QTodo todo=QTodo.todo;
+        QUser user=QUser.user;
+
+        return Optional.ofNullable(jpaQueryFactory.select(todo).
+                from(todo)
+                .where(todo.id.eq(todoId))
+                //명시적 join(on역할)
+                .leftJoin(todo.user, user).fetchJoin()
+                .fetchOne());
     }
 }
 
@@ -97,3 +117,4 @@ public class TodoRepositoryCustomImpl implements TodoRepositoryCustom {
 //서비스단이 아닌 customRepository 를 사용한 이유는 추후에 경우의 수가 늘어나면 서비스단은 조건문이 2의 배수로 늘어납니다.
 //일단 날씨정보,페이징 정보 받기,수정일 기준으로 기간 검색
 //page 전체갯수때문에 FETCH join을 사용을 안한다는것을 알아도 놓치기 쉬움....(gpt 검수 결과)
+

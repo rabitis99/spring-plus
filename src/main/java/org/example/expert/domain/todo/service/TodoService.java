@@ -49,7 +49,7 @@ public class TodoService {
 
     public Page<TodoResponse> getTodos(TodoCondition todoCondition) {
 
-        Page<Todo> todos = todoRepository.findTodoWithWeather(todoCondition);
+        Page<Todo> todos = todoRepository.findTodosWithWeather(todoCondition);
 
         return todos.map(todo -> new TodoResponse(
                 todo.getId(),
@@ -63,8 +63,9 @@ public class TodoService {
     }
 
     public TodoResponse getTodo(long todoId) {
-        Todo todo = todoRepository.findByIdWithUser(todoId)
-                .orElseThrow(() -> new InvalidRequestException("Todo not found"));
+        Todo todo = todoRepository.findTodoWithUserByQquery(todoId).
+                orElseThrow(() -> new InvalidRequestException("Todo not found"));
+        //얘는 어디다가 throw를 던지냐?
 
         User user = todo.getUser();
 

@@ -48,7 +48,11 @@ public class ManagerService {
         }
 
         Manager newManagerUser = new Manager(managerUser);
+        //할일이 생겼을 때, 매니저가 자동으로 생성 /매니저를 생성할때
+        newManagerUser.setTodo(todo);
+
         Manager savedManagerUser = managerRepository.save(newManagerUser);
+
 
         return new ManagerSaveResponse(
                 savedManagerUser.getId(),
