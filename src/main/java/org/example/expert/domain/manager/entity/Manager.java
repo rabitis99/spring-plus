@@ -25,12 +25,8 @@ public class Manager {
 
 
     // Manager는 반드시 하나의 Todo에 속해야 합니다.
-    //
-    public Manager(User user) {
+    public Manager(User user,Todo todo) {
         this.user = user;
-
-    }
-    public void setTodo(Todo todo) {
-        this.todo = todo;
+        this.todo=todo;
     }
 }

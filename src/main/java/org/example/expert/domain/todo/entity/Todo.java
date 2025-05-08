@@ -1,6 +1,7 @@
 package org.example.expert.domain.todo.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.expert.domain.comment.entity.Comment;
@@ -35,16 +36,6 @@ public class Todo extends Timestamped {
     @OneToMany(mappedBy = "todo",cascade = CascadeType.PERSIST)
     private List<Manager> managers = new ArrayList<>();
 
-
-    // 매니저를 중복 없이 등록하고, 양방향 연관관계를 설정합니다.
-    //연관 관계 메세드
-
-    public void addManager(Manager manager) {
-        if (!this.managers.contains(manager)) {
-            this.managers.add(manager);
-            manager.setTodo(this);
-        }
-    }
     //생성자
     public Todo(String title, String contents, String weather, User user) {
         this.title = title;
@@ -52,8 +43,7 @@ public class Todo extends Timestamped {
         this.weather = weather;
         this.user = user;
         // Todo 생성 시, 작성자가 자동으로 첫 번째 매니저로 등록됩니다.
-        Manager manager = new Manager(user);
-        this.addManager(manager);
+        this.managers.add(new Manager(user,this));
 
     }
 }
