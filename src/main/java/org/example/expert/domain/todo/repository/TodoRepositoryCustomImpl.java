@@ -1,10 +1,16 @@
 package org.example.expert.domain.todo.repository;
 
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import lombok.RequiredArgsConstructor;
+import org.example.expert.domain.comment.entity.QComment;
+import org.example.expert.domain.manager.entity.QManager;
 import org.example.expert.domain.todo.dto.request.TodoCondition;
+import org.example.expert.domain.todo.dto.response.TodoAdminResponse;
 import org.example.expert.domain.todo.entity.QTodo;
 import org.example.expert.domain.todo.entity.Todo;
 import org.example.expert.domain.user.entity.QUser;
@@ -16,7 +22,9 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -110,11 +118,86 @@ public class TodoRepositoryCustomImpl implements TodoRepositoryCustom {
                 .leftJoin(todo.user, user).fetchJoin()
                 .fetchOne());
     }
+    //page 조금 더 깔끔하게
+
+    @Override
+    public Page<TodoAdminResponse> findTodosBySearchCondition(LocalDateTime createdFrom, LocalDateTime createdTo, String nickName, String title, Pageable pageable) {
+        QTodo todo= QTodo.todo;
+        QComment comment=QComment.comment;
+        QManager manager=QManager.manager;
+        QUser user=QUser.user;
+
+        BooleanBuilder where =new BooleanBuilder();
+        if (createdFrom!= null){
+            where.and(todo.createdAt.after(createdFrom));
+        }
+        if (createdTo!= null){
+            where.and(todo.createdAt.before(createdTo));
+        }
+        if (title != null && !title.isBlank()) {
+            where.and(todo.title.containsIgnoreCase(title));
+        }
+        if (nickName != null && !nickName.isBlank()) {
+            where.and(todo.managers.any().user.nickname.containsIgnoreCase(nickName));
+        }
+
+        List<Long> todoIds = jpaQueryFactory
+                .select(todo.id)
+                .from(todo)
+                .where(where)
+                .orderBy(todo.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        if (todoIds.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
+
+        List<TodoAdminResponse> content = jpaQueryFactory
+                .select(Projections.fields(
+                        TodoAdminResponse.class,
+                        todo.id.as("todoId"),
+                        todo.title,
+                        todo.managers.size().as("managerCount"),
+                        todo.comments.size().as("commentCount")
+                ))
+                .from(todo)
+                .leftJoin(todo.managers, manager)
+                .leftJoin(todo.comments, comment)
+                .where(todo.id.in(todoIds))
+                .groupBy(todo.id)
+                .fetch();
+        // 분석 필요
+        Map<Long, List<String>> nicknameMap = jpaQueryFactory
+                .select(todo.id, user.nickname)
+                .from(todo)
+                .join(todo.managers, manager)
+                .join(manager.user, user)
+                .where(todo.id.in(todoIds))
+                .fetch()
+                .stream()
+                .collect(Collectors.groupingBy(
+                        tuple -> tuple.get(todo.id),//없으면 위에서 체크가 되서
+                        Collectors.mapping(tuple -> tuple.get(user.nickname), Collectors.toList())
+                ));
+
+        for (TodoAdminResponse dto : content) {
+            dto.setManagerNickNames(nicknameMap.getOrDefault(dto.getTodoId(), List.of()));
+        }
+
+        Long total = Optional.ofNullable(
+                jpaQueryFactory
+                        .select(todo.countDistinct())
+                        .from(todo)
+                        .leftJoin(todo.managers, manager)
+                        .leftJoin(todo.comments, comment)
+                        .where(where)
+                        .fetchOne()
+        ).orElse(0L);
+
+        return new PageImpl<>(content,pageable,total);
+    }
 }
 
-//implements PagingAndSortingRepository<Todo,Long>를 상속받지 말라고합니다.
-//혼동이 일어날 수 있다면서...(gpt 검수 결과)
-//서비스단이 아닌 customRepository 를 사용한 이유는 추후에 경우의 수가 늘어나면 서비스단은 조건문이 2의 배수로 늘어납니다.
-//일단 날씨정보,페이징 정보 받기,수정일 기준으로 기간 검색
-//page 전체갯수때문에 FETCH join을 사용을 안한다는것을 알아도 놓치기 쉬움....(gpt 검수 결과)
 
