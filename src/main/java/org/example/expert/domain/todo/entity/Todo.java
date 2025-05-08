@@ -38,6 +38,7 @@ public class Todo extends Timestamped {
 
     // 매니저를 중복 없이 등록하고, 양방향 연관관계를 설정합니다.
     //연관 관계 메세드
+
     public void addManager(Manager manager) {
         if (!this.managers.contains(manager)) {
             this.managers.add(manager);

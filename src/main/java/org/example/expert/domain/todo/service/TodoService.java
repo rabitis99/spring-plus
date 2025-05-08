@@ -5,6 +5,7 @@ import org.example.expert.client.WeatherClient;
 import org.example.expert.config.security.CustomUserPrincipal;
 import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
+import org.example.expert.domain.manager.service.LogService;
 import org.example.expert.domain.todo.dto.request.TodoCondition;
 import org.example.expert.domain.todo.dto.request.TodoSaveRequest;
 import org.example.expert.domain.todo.dto.response.TodoResponse;
@@ -27,6 +28,7 @@ public class TodoService {
 
     private final TodoRepository todoRepository;
     private final WeatherClient weatherClient;
+    private final LogService logService;
 
     @Transactional
     public TodoSaveResponse saveTodo(CustomUserPrincipal authUser, TodoSaveRequest todoSaveRequest) {
@@ -40,7 +42,10 @@ public class TodoService {
                 weather,
                 user
         );
+
         Todo savedTodo = todoRepository.save(newTodo);
+
+        logService.creatLog(user);
 
         return new TodoSaveResponse(
                 savedTodo.getId(),
