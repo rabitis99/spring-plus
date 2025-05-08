@@ -2,6 +2,7 @@ package org.example.expert.domain.todo.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.expert.client.WeatherClient;
+import org.example.expert.config.security.CustomUserPrincipal;
 import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.todo.dto.request.TodoCondition;
@@ -28,8 +29,8 @@ public class TodoService {
     private final WeatherClient weatherClient;
 
     @Transactional
-    public TodoSaveResponse saveTodo(AuthUser authUser, TodoSaveRequest todoSaveRequest) {
-        User user = User.fromAuthUser(authUser);
+    public TodoSaveResponse saveTodo(CustomUserPrincipal authUser, TodoSaveRequest todoSaveRequest) {
+        User user = authUser.getUser();
 
         String weather = weatherClient.getTodayWeather();
 

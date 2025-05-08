@@ -36,7 +36,7 @@ public class User extends Timestamped {
         this.userRole = userRole;
         this.nickname=nickname;
     }
-
+    // 테스트하기 좋다 이런건 하나정도 가지고 있자.
     public static User fromAuthUser(AuthUser authUser) {
         return new User(authUser.getId(), authUser.getEmail(), authUser.getUserRole(),authUser.getNickname());
     }

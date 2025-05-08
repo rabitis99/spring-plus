@@ -39,10 +39,10 @@ public class JwtUtil {
 
         return BEARER_PREFIX +
                 Jwts.builder()
-                        .setSubject(String.valueOf(userId))
+                        .setSubject(String.valueOf(userId))// email로 변화 OK, 바뀔필요성 X
                         .claim("email", email)
                         .claim("userRole", userRole)
-                        .claim("nickname",nickname)
+                        .claim("nickName",nickname)//얘는 프론트에서 추가요청
                         .setExpiration(new Date(date.getTime() + TOKEN_TIME))
                         .setIssuedAt(date) // 발급일
                         .signWith(key, signatureAlgorithm) // 암호화 알고리즘
